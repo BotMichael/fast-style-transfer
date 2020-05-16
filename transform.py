@@ -1,14 +1,21 @@
 # Copyright (c) 2016-2017 Shafeen Tejani. Released under GPLv3.
 
 import tensorflow as tf
+##import vgg_network
 
 WEIGHTS_INIT_STDEV = .1
 
-def net(image):
+
+
+def net(image,_vgg=None):
     image = image / 255.0
-    conv1 = _conv_layer(image, 32, 9, 1)
-    conv2 = _conv_layer(conv1, 64, 3, 2)
-    conv3 = _conv_layer(conv2, 128, 3, 2)
+##    conv1 = _conv_layer(image, 32, 9, 1)
+##    conv2 = _conv_layer(conv1, 64, 3, 2)
+##    conv3 = _conv_layer(conv2, 128, 3, 2)
+    conv3 = _vgg.net(image)['pool2']
+##    print(conv3.shape)
+
+    
     resid1 = _residual_block(conv3, 3)
     resid2 = _residual_block(resid1, 3)
     resid3 = _residual_block(resid2, 3)

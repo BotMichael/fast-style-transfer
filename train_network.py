@@ -1,6 +1,14 @@
 # Copyright (c) 2016-2017 Shafeen Tejani. Released under GPLv3.
 
 import os
+import sys
+#p="C:\\Users\\wws\\.conda\\evns\\TFGPUP3.6\\lib\\site-packages"
+#sys.path.append(p)
+#p="c:\\python27\\lib\\site-packages"
+p="C:\\Users\\wws\\Desktop\\python2.7\\site-packages"
+sys.path.append(p)
+print(sys.path)
+
 
 import numpy as np
 import scipy
@@ -18,14 +26,18 @@ CONTENT_WEIGHT = 1
 STYLE_WEIGHT = 5
 TV_WEIGHT = 1e-6
 LEARNING_RATE = 1e-3
-NUM_EPOCHS=5
+NUM_EPOCHS= 2#5
 BATCH_SIZE=4
 VGG_PATH = 'imagenet-vgg-verydeep-19.mat'
-CHECKPOINT_ITERATIONS = 100
+CHECKPOINT_ITERATIONS = 5000
 SAVE_PATH = 'network'
 
 def build_parser():
     parser = ArgumentParser()
+
+    parser.add_argument('--logfile', type=str,
+                        dest='log_file', help='log file path',
+                        metavar='LOGFILE', required=True)
 
     parser.add_argument('--style', type=str,
                         dest='style', help='style image path',
@@ -84,6 +96,7 @@ def build_parser():
     return parser
 
 def check_opts(opts):
+   # assert exists(opts.log_file), "log file path not found!"
     assert exists(opts.style), "style path not found!"
     assert exists(opts.train_path), "train path not found!"
 
@@ -100,6 +113,8 @@ def check_opts(opts):
 
 
 def main():
+    import time
+    _start_time=time.time()
     parser = build_parser()
     options = parser.parse_args()
     check_opts(options)
@@ -120,7 +135,8 @@ def main():
         style_weight=options.style_weight,
         tv_weight=options.style_weight,
         batch_size=options.batch_size,
-        device=device)
+        device=device,
+        log_f = options.log_file)
 
     for iteration, network, first_image, losses in style_transfer.train(
         content_training_images=content_targets,
@@ -129,14 +145,15 @@ def main():
         checkpoint_iterations=options.checkpoint_iterations
     ):
         print_losses(losses)
-
         saver = tf.train.Saver()
-        if (iteration % 100 == 0):
-            saver.save(network, opts.save_path + '/fast_style_network.ckpt')
+       #if (iteration % 1000 == 0):
+       #   saver.save(network, options.save_path + f'/fast_style_network_{iteration}.ckpt')
+       # print(1)
+        saver.save(network, options.save_path+f"/{iteration}/" + f'/fast_style_network_{iteration}.ckpt')
 
-        saver.save(network, opts.save_path + '/fast_style_network.ckpt')
-
-
+    _end_time=time.time()
+    print("total time: ",str(_end_time-_start_time))
+    
 def print_losses(losses):
     stdout.write('  content loss: %g\n' % losses['content'])
     stdout.write('    style loss: %g\n' % losses['style'])

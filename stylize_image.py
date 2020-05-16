@@ -12,6 +12,8 @@ import tensorflow as tf
 import transform
 
 NETWORK_PATH='networks'
+VGG_PATH = 'imagenet-vgg-verydeep-19.mat'
+
 
 def build_parser():
     parser = ArgumentParser()
@@ -29,6 +31,11 @@ def build_parser():
                         help='path for output',
                         metavar='OUTPUT_PATH', required=True)
 
+    parser.add_argument('--vgg-path', type=str,
+                        dest='vgg_path',
+                        help='path for output',
+                        metavar='OUTPUT_PATH', default=VGG_PATH)
+
     return parser
 
 def check_opts(opts):
@@ -37,9 +44,13 @@ def check_opts(opts):
 
 
 def main():
+    import vgg_network
+    
     parser = build_parser()
     options = parser.parse_args()
     check_opts(options)
+
+    vgg = vgg_network.VGG(options.vgg_path)
 
     network = options.network_path
     if not os.path.isdir(network):
@@ -51,16 +62,16 @@ def main():
     reshaped_content_image = content_image[:reshaped_content_height, :reshaped_content_width, :]
     reshaped_content_image = np.ndarray.reshape(reshaped_content_image, (1,) + reshaped_content_image.shape)
 
-    prediction = ffwd(reshaped_content_image, network)
+    prediction = ffwd(reshaped_content_image, network,vgg)
     utils.save_image(prediction, options.output_path)
 
 
-def ffwd(content, network_path):
+def ffwd(content, network_path,vgg_):
     with tf.Session() as sess:
         img_placeholder = tf.placeholder(tf.float32, shape=content.shape,
                                          name='img_placeholder')
 
-        network = transform.net(img_placeholder)
+        network = transform.net(img_placeholder,vgg_)
         saver = tf.train.Saver()
 
         ckpt = tf.train.get_checkpoint_state(network_path)

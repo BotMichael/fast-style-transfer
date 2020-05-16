@@ -77,8 +77,9 @@ class FastStyleTransfer:
 
     def __init__(self, vgg_path,
                 style_image, content_shape, content_weight,
-                style_weight, tv_weight, batch_size, device):
+                style_weight, tv_weight, batch_size, device,log_f):
         with tf.device(device):
+            self.log_file=log_f
             vgg = vgg_network.VGG(vgg_path)
             self.style_image = style_image
             self.batch_size = batch_size
@@ -88,7 +89,7 @@ class FastStyleTransfer:
                                               shape=self.batch_shape,
                                               name="input_batch")
 
-            self.stylized_image = transform.net(self.input_batch)
+            self.stylized_image = transform.net(self.input_batch,_vgg=vgg)
 
             loss_calculator = LossCalculator(vgg, self.stylized_image)
 
@@ -125,13 +126,14 @@ class FastStyleTransfer:
 
         def print_progress(i):
             stdout.write('Iteration %d\n' % (i + 1))
-
+        f_loss_log = open(self.log_file,"w")
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(self.loss)
 
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             iterations = 0
             for epoch in range(epochs):
+                #below indexing is for debug/testing purpose only
                 for i in range(0, len(content_training_images), self.batch_size):
                     print_progress(iterations)
 
@@ -146,7 +148,10 @@ class FastStyleTransfer:
                             self.stylized_image.eval(feed_dict={self.input_batch:batch})[0],
                             self._current_loss({self.input_batch:batch})
                        )
+                        f_loss_log.write(f"{iterations} {self._current_loss({self.input_batch:batch})}\n")
                     iterations += 1
+                    if iterations>40020:
+                        break
 
     def _load_batch(self, image_paths):
         return np.array([utils.load_image(img_path) for j, img_path in enumerate(image_paths)])

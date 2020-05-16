@@ -52,7 +52,7 @@ class VGG:
                 current_layer = _pooling_layer_from(current_layer)
             net[name] = current_layer
 
-        assert len(net) == len(self.LAYERS)
+##        assert len(net) == len(self.LAYERS)
         return net
 
 
